@@ -9,7 +9,7 @@ def grover(circuit, qbts, item, length):
 	circuit.append(cirq.H(qubit) for qubit in qbts)  # Initialize all qubits in superposition
 	step(circuit, qbts, item, length)
 	if length > 2:
-		for t in range(int(math.ceil(length**0.5))-1):
+		for t in range(int(math.ceil((2**length)**0.5))-1):
 			step(circuit, qbts, item, length)
 	circuit.append(cirq.measure(*qbts, key='result'))  # Measure outputs
 
@@ -38,8 +38,8 @@ def amplify(circuit, qbts):  # Amplification
 
 
 # Determine target and reate circuit with n qubits
-target = 5
-n = 3
+target = 12
+n = 10
 qubits = cirq.LineQubit.range(n)
 quantum_circuit = cirq.Circuit()
 
@@ -51,7 +51,7 @@ sim = cirq.Simulator()
 print(sim.simulate(quantum_circuit), end='\n\n')
 
 # Run circuit and sample results
-samples = sim.run(quantum_circuit, repetitions=1000)
+samples = sim.run(quantum_circuit, repetitions=10)
 print(samples.histogram(key='result'), end='\n\n')
 
 # print circuit
