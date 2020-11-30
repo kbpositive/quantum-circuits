@@ -17,7 +17,7 @@ def oracle(qbts, item, length):
 	yield [cirq.X(i) for i in active_qbts]
 
 
-# After the oracle function, the output probabilities get amplified
+# After the oracle function, the output probabilities are amplified.
 def amplify(circuit, qbts):  # Amplification
 	circuit.append([cirq.H(qubit) for qubit in qbts], strategy=cirq.InsertStrategy.NEW_THEN_INLINE)
 	circuit.append(cirq.X(qubit) for qubit in qbts)
