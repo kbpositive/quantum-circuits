@@ -70,6 +70,6 @@ def results(target, attempts):
 	print('Quantum steps: ', int(math.ceil((2**bits)**0.5))*attempts)
 	print('Classical steps: ', int(math.ceil((2**bits)/2)), end='\n\n')
 
-target = 323
+target = 32306
 attempts = 10
 results(target, attempts)
