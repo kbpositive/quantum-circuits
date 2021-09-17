@@ -40,9 +40,10 @@ plt.bar([i[0] for i in results], [i[1] for i in results])
 for i, j in enumerate(results):
     plt.text(j[0], j[1], j[0])
 plt.savefig("./results.png")
-print(quantum_circuit)
-"""0: ───X───────────@───H───M───@───M('result')───
+"""
+0: ───X───────────@───H───M───@───M('result')───
                   │           │   │
 1: ───────H───@───X───M───@───┼───M─────────────
               │           │   │   │
-2: ───────────X───────────X───@───M─────────────"""
+2: ───────────X───────────X───@───M─────────────
+"""
