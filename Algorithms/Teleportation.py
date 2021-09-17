@@ -28,11 +28,13 @@ quantum_circuit.append(cirq.H(qbits[0]))
 quantum_circuit.append(cirq.measure(qbits[0]))
 quantum_circuit.append(cirq.measure(qbits[1]))
 
+# information from new bit
 quantum_circuit.append(cirq.CNOT(qbits[1], qbits[2]))
 quantum_circuit.append(cirq.CZ(qbits[0], qbits[2]))
 
-
+# measure results
 quantum_circuit.append(cirq.measure(*qbits, key="result"))
+
 sim = cirq.Simulator()
 samples = sim.run(quantum_circuit, repetitions=1000)
 results = [[a, b] for (a, b) in samples.histogram(key="result").items()]
