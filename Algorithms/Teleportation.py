@@ -1,6 +1,4 @@
 import cirq
-from cirq.circuits import InsertStrategy
-import matplotlib.pyplot as plt
 
 alice = cirq.NamedQubit("alice")
 bob = cirq.NamedQubit("bob")
