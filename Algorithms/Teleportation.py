@@ -1,7 +1,11 @@
 import cirq
 
-alice = cirq.NamedQubit("alice")
-bob = cirq.NamedQubit("bob")
+
+class Sender:
+    def __init__(self, name):
+        self.name = name
+        self.qubit = cirq.NamedQubit(name)
+        self.circuit = cirq.Circuit()
 
 
 class Teleporter:
@@ -10,11 +14,10 @@ class Teleporter:
 
 
 def entangle(initialBit, targetBit):
-    # put initla bit into super position
-    h = cirq.Moment([cirq.H(initialBit)])
+    # put initlal bit into super position
+    cirq.H(initialBit)
     # use controlled not to create entangled pair with target bit
-    cnot = cirq.Moment([cirq.CNOT(initialBit, targetBit)])
-    return cirq.Circuit([h, cnot])
+    cirq.CNOT(initialBit, targetBit)
 
 
 def encodeData(newBit, data, entangledBit):
@@ -45,16 +48,18 @@ def decodeData(xFlip, zFlip, entangledBit):
 
 
 def main():
+    alice = Sender("alice")
+    bob = Sender("bob")
     # start with entangled pair
-    entangledCircuit = entangle(alice, bob)
-    print(entangledCircuit, end="\n\n")
+    # entangle(alice, bob)
+    # print(entangledCircuit, end="\n\n")
 
     newBit = cirq.NamedQubit("newBit")
-    newData = encodeData(newBit, [cirq.Moment([cirq.X(newBit)])], alice)
+    newData = encodeData(newBit, [cirq.Moment([cirq.H(newBit)])], alice.qubit)
     print(newData, end="\n\n")
 
     res = list(cirq.Simulator().run(newData).histogram(key="result").keys())[0]
-    teleportedBit = decodeData(res % 2, (res // 2) % 2, bob)
+    teleportedBit = decodeData(res % 2, (res // 2) % 2, bob.qubit)
     print(teleportedBit, end="\n\n")
 
     result = cirq.Simulator().sample(teleportedBit).loc[0, "result"]
