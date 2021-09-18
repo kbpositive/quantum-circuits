@@ -5,11 +5,9 @@ bob = cirq.NamedQubit("bob")
 
 
 def entangle(initialBit, targetBit):
-    cnot = cirq.H(initialBit)
-    mix = cirq.CNOT(initialBit, targetBit)
-    m1 = cirq.Moment([cnot])
-    m2 = cirq.Moment([mix])
-    return cirq.Circuit([m1, m2])
+    h = cirq.Moment([cirq.H(initialBit)])
+    cnot = cirq.Moment([cirq.CNOT(initialBit, targetBit)])
+    return cirq.Circuit([h, cnot])
 
 
 def encodeData(newBit, entangledBit):
@@ -35,22 +33,18 @@ def update(xFlip, zFlip, entangledBit):
 
 
 # start with entangled pair
-# aliceCircuit.append(cirq.X(alice[1]))
 entangledCircuit = entangle(alice, bob)
 print(entangledCircuit)
-newData = encodeData(cirq.NamedQubit("new"), alice)
+
+newData = encodeData(cirq.NamedQubit("newBit"), alice)
 print(newData)
-res = list(cirq.Simulator().run(newData, repetitions=1).histogram(key="result").keys())[
-    0
-]
-print(res % 2, (res // 2) % 2)
+
+res = list(cirq.Simulator().run(newData).histogram(key="result").keys())[0]
 teleportedBit = update(res % 2, (res // 2) % 2, bob)
 print(teleportedBit)
 
-sim = cirq.Simulator()
-samples = sim.run(teleportedBit, repetitions=1)
-results = list(samples.histogram(key="result"))[0]
-print(results)
+result = cirq.Simulator().sample(teleportedBit).loc[0, "result"]
+print(result)
 
 """
 0: ───X───────────@───H───M───@───M('result')───
