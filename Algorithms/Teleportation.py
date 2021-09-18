@@ -2,56 +2,58 @@ import cirq
 from cirq.circuits import InsertStrategy
 import matplotlib.pyplot as plt
 
-qbits = cirq.LineQubit.range(3)
-quantum_circuit = cirq.Circuit()
+alice = cirq.NamedQubit("alice")
+bob = cirq.NamedQubit("bob")
 
 
-def entangle(initialBit, targetBits, circuit):
-    circuit.append(cirq.H(initialBit), strategy=InsertStrategy.NEW_THEN_INLINE)
-    for bit in targetBits:
-        circuit.append(cirq.CNOT(initialBit, bit))
+def entangle(initialBit, targetBit):
+    cnot = cirq.H(initialBit)
+    mix = cirq.CNOT(initialBit, targetBit)
+    m1 = cirq.Moment([cnot])
+    m2 = cirq.Moment([mix])
+    return cirq.Circuit([m1, m2])
 
 
-def encodeData(entangledBit, newBit, circuit):
+def encodeData(newBit, entangledBit):
     # connect new qubit with entangled bit
-    circuit.append(cirq.CNOT(newBit, entangledBit))
+    control = cirq.Moment([cirq.CNOT(newBit, entangledBit)])
     # add H gave to new qubit for phase correction
-    circuit.append(cirq.H(newBit))
+    h = cirq.Moment([cirq.H(newBit)])
     # measure entangled bit and new bit
-    circuit.append(cirq.measure(newBit))
-    circuit.append(cirq.measure(entangledBit))
+    m = cirq.Moment([cirq.measure(newBit, entangledBit, key="result")])
     # teleported data
-    return entangledBit, newBit
+    return cirq.Circuit([control, h, m])
 
 
-def update(xFlip, zFlip, entangledBit, circuit):
-    # information from new bit
-    circuit.append(cirq.CNOT(xFlip, entangledBit))
-    circuit.append(cirq.CZ(zFlip, entangledBit))
+def update(xFlip, zFlip, entangledBit):
+    # return information from new bit
+    teleportedInfo = []
+    if xFlip:
+        teleportedInfo.append(cirq.Moment([cirq.X(entangledBit)]))
+    if zFlip:
+        teleportedInfo.append(cirq.Moment([cirq.Z(entangledBit)]))
+    teleportedInfo.append(cirq.Moment([cirq.measure(entangledBit, key="result")]))
+    return cirq.Circuit(teleportedInfo)
 
-
-# teleported bit
-quantum_circuit.append(cirq.X(qbits[0]))
 
 # start with entangled pair
-entangle(qbits[1], qbits[2:], quantum_circuit)
-
-# encode new bit with entangled bit
-xf, zf = encodeData(qbits[1], qbits[0], quantum_circuit)
-
-# update other entangled bit with new (teleported) info
-update(xf, zf, qbits[2], quantum_circuit)
-
-# measure results
-quantum_circuit.append(cirq.measure(*qbits, key="result"))
+# aliceCircuit.append(cirq.X(alice[1]))
+entangledCircuit = entangle(alice, bob)
+print(entangledCircuit)
+newData = encodeData(cirq.NamedQubit("new"), alice)
+print(newData)
+res = list(cirq.Simulator().run(newData, repetitions=1).histogram(key="result").keys())[
+    0
+]
+print(res % 2, (res // 2) % 2)
+teleportedBit = update(res % 2, (res // 2) % 2, bob)
+print(teleportedBit)
 
 sim = cirq.Simulator()
-samples = sim.run(quantum_circuit, repetitions=1000)
-results = [[a, b] for (a, b) in samples.histogram(key="result").items()]
-plt.bar([i[0] for i in results], [i[1] for i in results])
-for i, j in enumerate(results):
-    plt.text(j[0], j[1], j[0])
-plt.savefig("./results.png")
+samples = sim.run(teleportedBit, repetitions=1)
+results = list(samples.histogram(key="result"))[0]
+print(results)
+
 """
 0: ───X───────────@───H───M───@───M('result')───
                   │           │   │
