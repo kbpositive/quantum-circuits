@@ -17,15 +17,12 @@ class Teleporter:
             for n in [
                 cirq.CNOT(newBit, self.qubit),
                 cirq.H(newBit),
-                cirq.measure(newBit, self.qubit, key="result"),
+                cirq.measure(newBit, self.qubit, key=""),
             ]
         ]
 
-    def teleport(self, data):
-        result = list(
-            cirq.Simulator().run(cirq.Circuit(data)).histogram(key="result").keys()
-        )[0]
-        return result % 2, (result // 2) % 2
+    def teleport(self, newBit):
+        return newBit, self.qubit
 
 
 class Receiver:
@@ -33,16 +30,14 @@ class Receiver:
         self.qubit = entangledQubit
 
     def decode(self, xFlip, zFlip):
-        teleportedInfo = []
-        if xFlip:
-            teleportedInfo.append(cirq.Moment([cirq.X(self.qubit)]))
-        if zFlip:
-            teleportedInfo.append(cirq.Moment([cirq.Z(self.qubit)]))
-        for n in [
-            cirq.measure(self.qubit, key="result"),
-        ]:
-            teleportedInfo.append(cirq.Moment([n]))
-        return teleportedInfo
+        return [
+            cirq.Moment([n])
+            for n in [
+                cirq.CNOT(xFlip, self.qubit),
+                cirq.CZ(zFlip, self.qubit),
+                cirq.measure(xFlip, zFlip, self.qubit, key="result"),
+            ]
+        ]
 
 
 def entangle(initialBit, targetBit):
@@ -68,11 +63,13 @@ def main():
     newData = tele.encode(newBit)
     circuit.extend(newData)
 
-    xf, zf = tele.teleport(circuit)
+    xf, zf = tele.teleport(newBit)
 
     rec = Receiver(bob.qubit)
+    teleportedInfo = rec.decode(xf, zf)
+    circuit.extend(teleportedInfo)
 
-    print(cirq.Circuit(rec.decode(xf, zf)), end="\n\n")
+    print(cirq.Circuit(circuit), end="\n\n")
 
 
 if __name__ == "__main__":
